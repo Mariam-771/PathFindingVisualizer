@@ -23,6 +23,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [play, setPlay] = React.useState(false);
 
   return (
+
     <div className="w-full px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4 rounded shadow">
       {/* Left Side */}
       <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-1/2">
@@ -52,6 +53,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <li>
                 <a onClick={() => setAlgorithm("A_STAR")}>A* (Astar)</a>
               </li>
+
             </ul>
           )}
         </div>
@@ -65,6 +67,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               src="https://img.icons8.com/color/48/bot.png"
               alt="bot"
               className="w-20 sm:w-24 md:w-14 lg:w-16 hover:scale-110 transition-transform"
+
             />
           </Draggable>
         )}
@@ -75,15 +78,18 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               src="https://img.icons8.com/nolan/64/point-objects.png"
               alt="point"
               className="w-20 sm:w-24 md:w-14 lg:w-16 hover:scale-110 transition-transform"
+
             />
           </Draggable>
         )}
 
         <button
+
           className={`transition-all duration-200 ${
             startPosition == null || endPosition == null
               ? "opacity-50 pointer-events-none"
               : ""
+
           }`}
           onClick={() => {
             const newPlayState = !play;
@@ -92,6 +98,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           }}
           disabled={startPosition == null || endPosition == null}
         >
+
           <img
             src={
               play
@@ -101,6 +108,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             alt={play ? "repeat" : "play"}
             className="w-24 sm:w-28 md:w-16 lg:w-20"
           />
+
         </button>
       </div>
     </div>
