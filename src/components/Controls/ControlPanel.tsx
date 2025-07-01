@@ -1,81 +1,95 @@
-// src/components/Controls/ControlPanel.tsx
-import React, { useState } from "react";
+import React from "react";
 import { Draggable } from "../../utils/draggable";
+import { AlgorithmType } from "../../types";
 
 interface ControlPanelProps {
   onPlay: () => void;
   onTogglePlay: (isPlaying: boolean) => void;
   startPosition: string | null;
   endPosition: string | null;
+  algorithm: AlgorithmType;
+  setAlgorithm: (algo: AlgorithmType) => void;
+  isPlaying: boolean; 
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
-  onPlay,
   onTogglePlay,
   startPosition,
-  endPosition
+  endPosition,
+  algorithm,
+  setAlgorithm,
+  isPlaying, 
 }) => {
   const [play, setPlay] = React.useState(false);
-  const [algorithm, setAlgorithmState] = useState("Dijkstra");
-
-  const setAlgorithm = (algo: string) => {
-    setAlgorithmState(algo); 
-  };
 
   return (
-    <div className="flex flex-wrap md:flex-nowrap pl-2.5 gap-4 mb-4 justify-between items-center w-full">
-      
-      {/* Left Section */}
-      <div className="w-full md:w-1/2 flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-8 items-start md:items-center">
-        <div className="text-white text-2xl md:text-4xl font-semibold">Pathfinding Visualizer</div>
 
-        {/* Dropdown */}
+    <div className="w-full px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4 rounded shadow">
+      {/* Left Side */}
+      <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-1/2">
+        <h1 className="text-white text-2xl sm:text-3xl font-semibold text-center md:text-left">
+          Pathfinding Visualizer
+        </h1>
+
         <div className="dropdown">
           <div
             tabIndex={play ? -1 : 0}
             role="button"
-            className={`btn px-4 py-2 flex justify-center ${play ? 'pointer-events-none opacity-50' : ''}`}
+            className={`btn px-4 py-2 text-base ${
+              play ? "pointer-events-none opacity-50" : ""
+            }`}
           >
             {algorithm}
           </div>
+
           {!play && (
-            <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow-sm">
-              <li><a onClick={() => setAlgorithm("Dijkstra")}>Dijkstra</a></li>
-              <li><a onClick={() => setAlgorithm("Astar")}>Astar</a></li>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu bg-base-100 rounded-box z-10 w-44 p-2 shadow"
+            >
+              <li>
+                <a onClick={() => setAlgorithm("DIJKSTRA")}>Dijkstra</a>
+              </li>
+              <li>
+                <a onClick={() => setAlgorithm("A_STAR")}>A* (Astar)</a>
+              </li>
+
             </ul>
           )}
         </div>
       </div>
 
-      {/* Right Section */}
-      <div className="w-full md:w-1/2 flex flex-wrap justify-end gap-4 items-center">
-        {startPosition == null && (
+      {/* Right Side */}
+      <div className="flex flex-row flex-wrap gap-4 items-center justify-center md:justify-end w-full md:w-1/2">
+       {!isPlaying && startPosition == null && (
           <Draggable id="bot">
             <img
-              width="40"
-              height="40"
-              className="md:w-[50px] md:h-[50px]"
-              src="https://img.icons8.com/color/50/bot.png"
+              src="https://img.icons8.com/color/48/bot.png"
               alt="bot"
+              className="w-20 sm:w-24 md:w-14 lg:w-16 hover:scale-110 transition-transform"
+
             />
           </Draggable>
         )}
 
-        {endPosition == null && (
+        {!isPlaying && endPosition == null && (
           <Draggable id="point">
             <img
-              width="50"
-              height="50"
-              className="md:w-[64px] md:h-[64px]"
               src="https://img.icons8.com/nolan/64/point-objects.png"
-              alt="point-objects"
+              alt="point"
+              className="w-20 sm:w-24 md:w-14 lg:w-16 hover:scale-110 transition-transform"
+
             />
           </Draggable>
         )}
 
         <button
-          className={`py-2 rounded hover:cursor-pointer transition-transform duration-200 ${
-            (startPosition == null || endPosition == null) ? 'opacity-50 pointer-events-none' : ''
+
+          className={`transition-all duration-200 ${
+            startPosition == null || endPosition == null
+              ? "opacity-50 pointer-events-none"
+              : ""
+
           }`}
           onClick={() => {
             const newPlayState = !play;
@@ -84,23 +98,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           }}
           disabled={startPosition == null || endPosition == null}
         >
-          {!play ? (
-            <img
-              width="70"
-              height="70"
-              className="md:w-[100px] md:h-[100px]"
-              src="https://img.icons8.com/clouds/100/play.png"
-              alt="play"
-            />
-          ) : (
-            <img
-              width="70"
-              height="70"
-              className="md:w-[100px] md:h-[100px]"
-              src="https://img.icons8.com/clouds/100/repeat.png"
-              alt="repeat"
-            />
-          )}
+
+          <img
+            src={
+              play
+                ? "https://img.icons8.com/clouds/100/repeat.png"
+                : "https://img.icons8.com/clouds/100/play.png"
+            }
+            alt={play ? "repeat" : "play"}
+            className="w-24 sm:w-28 md:w-16 lg:w-20"
+          />
+
         </button>
       </div>
     </div>

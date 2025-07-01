@@ -6,11 +6,12 @@ import { NodeType } from '../../types';
 interface GridProps {
   startPosition: string | null;
   endPosition: string | null;
-  draggedItem: { id: string; overId: string } | null;
   visitedNodes: string[];
   pathNodes: string[];
   isPlaying: boolean;
   onClearGrid: () => void;
+  onUpdateStart: (newStartId: string) => void;
+  onUpdateEnd: (newEndId: string) => void;
 }
 
 const Grid: React.FC<GridProps> = ({
@@ -19,82 +20,89 @@ const Grid: React.FC<GridProps> = ({
   visitedNodes,
   pathNodes,
   isPlaying,
-  onClearGrid }) => {
-
+  onClearGrid,
+  onUpdateStart,
+  onUpdateEnd,
+}) => {
   const { wallPositions, toggleWall } = useWallContext();
-  const [columns, setColumns] = useState(20);
   const [visualState, setVisualState] = useState<Record<string, Partial<NodeType>>>({});
-  const [isMousePressed, setIsMousePressed] = useState(false);
 
-  const MAX_ROW = 15;
-
-  
+  const ROWS = 15;
+  const COLUMNS = 20;
 
   useEffect(() => {
-  let isCancelled = false;
+    let isCancelled = false;
 
-  const animateAlgorithm = async (visited: string[], path: string[]) => {
-    if (!isPlaying) {
+    const animateAlgorithm = async (visited: string[], path: string[]) => {
+      if (!isPlaying) {
+        isCancelled = true;
+        onClearGrid();
+        return;
+      }
+
+      for (let i = 0; i < visited.length; i++) {
+        if (isCancelled) { onClearGrid(); return; }
+        await new Promise(res => setTimeout(res, 10));
+        setVisualState(prev => ({
+          ...prev,
+          [visited[i]]: { ...(prev[visited[i]] || {}), isVisited: true },
+        }));
+      }
+
+      for (let i = 0; i < visited.length; i++) {
+        if (isCancelled) { onClearGrid(); return; }
+        await new Promise(res => setTimeout(res, 10));
+        setVisualState(prev => ({
+          ...prev,
+          [visited[i]]: { ...(prev[visited[i]] || {}), isVisited: true },
+        }));
+      }
+
+      for (let i = 0; i < path.length; i++) {
+        if (isCancelled) { onClearGrid(); return; }
+        await new Promise(res => setTimeout(res, 20));
+        setVisualState(prev => ({
+          ...prev,
+          [path[i]]: { ...(prev[path[i]] || {}), isPath: true },
+        }));
+      }
+    };
+
+    if (visitedNodes.length === 0 && pathNodes.length === 0) {
+      setVisualState({});
+    }
+
+    if (visitedNodes.length > 0 || pathNodes.length > 0) {
+      animateAlgorithm(visitedNodes, pathNodes);
+    }
+
+    return () => {
       isCancelled = true;
-      onClearGrid();
-      return;
-    }
-
-    for (let i = 0; i < visited.length; i++) {
-      if (isCancelled) {onClearGrid(); return;}
-      await new Promise(res => setTimeout(res, 30));
-      setVisualState(prev => ({
-        ...prev,
-        [visited[i]]: { ...(prev[visited[i]] || {}), isVisited: true },
-      }));
-    }
-
-    for (let i = 0; i < path.length; i++) {
- if (isCancelled) {onClearGrid(); return;}
-      await new Promise(res => setTimeout(res, 50));
-      setVisualState(prev => ({
-        ...prev,
-        [path[i]]: { ...(prev[path[i]] || {}), isPath: true },
-      }));
-    }
-  };
-
-  if (visitedNodes.length === 0 && pathNodes.length === 0) {
-    setVisualState({});
-  }
-
-  if (visitedNodes.length > 0 || pathNodes.length > 0) {
-    animateAlgorithm(visitedNodes, pathNodes);
-  }
-
-  const calculateColumns = () => {
-    const screenWidth = window.innerWidth;
-    const cellSize = 50;
-    const cols = Math.floor(screenWidth / (cellSize + 2));
-    setColumns(cols);
-  };
-
-  calculateColumns();
-  window.addEventListener('resize', calculateColumns);
-
-  return () => {
-    isCancelled = true; // 🔁 this cancels animation on cleanup
-    window.removeEventListener('resize', calculateColumns);
-  };
-}, [visitedNodes, pathNodes, isPlaying]); // ← also track `isPlaying`
-
+    };
+  }, [visitedNodes, pathNodes, isPlaying, onClearGrid]);
 
   const handleWallToggle = (id: string) => {
-    if(isPlaying) return; // Prevent wall toggling during animation
+    if (isPlaying) return;
     toggleWall(id);
   };
 
+  const handleDropNode = (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    if (targetId === startPosition || targetId === endPosition) return;
+
+    if (draggedId === startPosition) {
+      onUpdateStart(targetId);
+    } else if (draggedId === endPosition) {
+      onUpdateEnd(targetId);
+    }
+  };
+
   const grid = [];
-  for (let i = 0; i < MAX_ROW; i++) {
-    for (let j = 0; j < columns; j++) {
+  for (let i = 0; i < ROWS; i++) {
+    for (let j = 0; j < COLUMNS; j++) {
       const id = `node-${i}-${j}`;
       const visual = visualState[id] || {};
-      const node = {
+      const node: NodeType = {
         row: i,
         col: j,
         isStart: startPosition === id,
@@ -105,7 +113,7 @@ const Grid: React.FC<GridProps> = ({
         g: 0,
         h: 0,
         previousNode: null,
-        ...visual
+        ...visual,
       };
 
       grid.push(
@@ -113,28 +121,21 @@ const Grid: React.FC<GridProps> = ({
           key={id}
           node={node}
           onWallToggle={() => handleWallToggle(id)}
-          onMouseEnter={() => {
-            if (isMousePressed) handleWallToggle(id);
-          }}
-          //onClick={() => handleWallToggle(id)} 
+          isPlaying={isPlaying}
+          onDropNode={handleDropNode}
         />
       );
     }
   }
 
   return (
-    <div
-      className="flex flex-col min-h-screen px-2 pt-8 select-none"
-      onMouseDown={() => setIsMousePressed(true)}
-      onMouseUp={() => setIsMousePressed(false)}
-      onMouseLeave={() => setIsMousePressed(false)}
-    >
+    <div className="flex flex-col min-h-screen px-2 pt-8 select-none">
       <div
         className="grid w-full max-w-screen-2xl"
         style={{
-          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gridTemplateColumns: `repeat(${COLUMNS}, minmax(0, 1fr))`,
           columnGap: '1px',
-          rowGap: '6px',
+          rowGap: '20px',
         }}
       >
         {grid}
@@ -144,3 +145,4 @@ const Grid: React.FC<GridProps> = ({
 };
 
 export default Grid;
+
